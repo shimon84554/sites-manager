@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* משתני צבע — ערוצי HSL בלבד (מאפשר שקיפות: hsl(var(--x) / 0.1)) */
+@layer base {
+  :root {
+    /* גופן עברית — נטען דרך <link> ב-layout; נפילה חיננית לגופן מערכת */
+    --font-heebo: "Heebo", "Segoe UI", "Arial", sans-serif;
+
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 94%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 94%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 214 95% 93%;
+    --accent-foreground: 221 83% 35%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 88%;
+    --input: 214 32% 88%;
+    --ring: 221 83% 53%;
+    --radius: 0.65rem;
+
+    /* דחיפות חידושים */
+    --urgent: 0 72% 51%;
+    --urgent-foreground: 0 0% 100%;
+    --warn: 32 95% 44%;
+    --warn-foreground: 0 0% 100%;
+    --ok: 142 71% 40%;
+    --ok-foreground: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+    --card: 222 44% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 44% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 50% 23%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 50%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 22%;
+    --input: 217 33% 24%;
+    --ring: 224 76% 60%;
+
+    --urgent: 0 72% 58%;
+    --urgent-foreground: 0 0% 100%;
+    --warn: 32 90% 52%;
+    --warn-foreground: 222 47% 11%;
+    --ok: 142 64% 47%;
+    --ok-foreground: 0 0% 100%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* רקעים רכים לפי דחיפות (לשורות טבלה / כרטיסים) */
+@layer utilities {
+  .tint-urgent {
+    background-color: hsl(var(--urgent) / 0.1);
+  }
+  .tint-warn {
+    background-color: hsl(var(--warn) / 0.12);
+  }
+  .tint-ok {
+    background-color: hsl(var(--ok) / 0.08);
+  }
+  .text-urgent {
+    color: hsl(var(--urgent));
+  }
+  .text-warn {
+    color: hsl(var(--warn));
+  }
+  .text-ok {
+    color: hsl(var(--ok));
+  }
+  /* פס צבע בצד ההתחלה (ימין ב-RTL) */
+  .bar-urgent {
+    box-shadow: inset 3px 0 0 0 hsl(var(--urgent));
+  }
+  .bar-warn {
+    box-shadow: inset 3px 0 0 0 hsl(var(--warn));
+  }
+  .bar-ok {
+    box-shadow: inset 3px 0 0 0 hsl(var(--ok));
+  }
+}
+
+/* פס גלילה עדין */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.5);
+}

@@ -1,0 +1,183 @@
+// Sites Manager — סכמת מסד הנתונים
+// -----------------------------------------------------------------------------
+// ברירת מחדל: SQLite (אפס התקנה לפיתוח).
+// למעבר ל-PostgreSQL בפרודקשן: שנה את provider ל-"postgresql"
+// ועדכן את DATABASE_URL ב-.env. כל הטיפוסים כאן תואמים לשני מסדי הנתונים
+// (משתמשים ב-String במקום enums כדי לשמור תאימות מלאה).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// המשתמש היחיד של המערכת (אימות מייל+סיסמה)
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// לקוח / חברה שעבורם מתוחזקים אתרים
+model Client {
+  id           String   @id @default(cuid())
+  name         String
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sites Site[]
+
+  @@index([name])
+}
+
+// אתר בודד — כל המידע התפעולי במקום אחד
+model Site {
+  id           String   @id @default(cuid())
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name         String
+  primaryDomain String?
+  // סטטוס: active | building | paused | closed
+  status       String   @default("active")
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // --- אירוח (Hosting) ---
+  hostingProvider     String?
+  hostingPlan         String?
+  serverIpOrUrl       String?
+  hostingCostAmount   Float?
+  hostingCostCurrency String  @default("ILS")
+  // billingCycle: monthly | yearly | quarterly | one_time
+  hostingBillingCycle String  @default("monthly")
+  hostingRenewalDate  DateTime?
+
+  // --- דומיין ---
+  domainRegistrar    String?
+  domainCostAmount   Float?
+  domainCurrency     String   @default("ILS")
+  domainBillingCycle String   @default("yearly")
+  domainRenewalDate  DateTime?
+
+  // --- סטאק טכני / DB ---
+  framework   String?
+  language    String?
+  // dbType: MySQL | PostgreSQL | MongoDB | SQLite | none
+  dbType      String?
+  dbHostNotes String?
+  repoUrl     String?
+
+  // --- הכנסה (לחישוב רווחיות) ---
+  clientBillingAmount   Float?
+  clientBillingCurrency String  @default("ILS")
+  clientBillingCycle    String  @default("monthly")
+
+  // --- ניטור SSL / זמינות (מתעדכן ע"י ה-cron) ---
+  monitorEnabled  Boolean   @default(true)
+  lastCheckAt     DateTime?
+  lastStatusCode  Int?
+  lastUp          Boolean?
+  lastResponseMs  Int?
+  sslValidTo      DateTime?
+  sslIssuer       String?
+  sslDaysLeft     Int?
+  lastCheckError  String?
+
+  subscriptions Subscription[]
+  credentials   Credential[]
+  checks        SiteCheck[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+// מנוי / שירות בתשלום המשויך לאתר
+model Subscription {
+  id          String   @id @default(cuid())
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  serviceName String
+  provider    String?
+  costAmount  Float?
+  currency    String   @default("ILS")
+  // billingCycle: monthly | yearly | quarterly | one_time
+  billingCycle String  @default("monthly")
+  renewalDate DateTime?
+  autoRenew   Boolean  @default(false)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([siteId])
+  @@index([renewalDate])
+}
+
+// כספת פרטי גישה — הסוד עצמו נשמר מוצפן (AES-256-GCM) בלבד
+model Credential {
+  id        String   @id @default(cuid())
+  siteId    String
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  label     String
+  // type: ftp | ssh | panel | db | api | other
+  type      String   @default("other")
+  username  String?
+  url       String?
+  // הסוד המוצפן בפורמט iv:authTag:ciphertext (hex). לעולם לא plaintext.
+  secretCipher String
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([siteId])
+}
+
+// היסטוריית בדיקות זמינות/SSL (לטיימליין)
+model SiteCheck {
+  id           String   @id @default(cuid())
+  siteId       String
+  site         Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  checkedAt    DateTime @default(now())
+  statusCode   Int?
+  up           Boolean  @default(false)
+  responseMs   Int?
+  sslValidTo   DateTime?
+  sslDaysLeft  Int?
+  error        String?
+
+  @@index([siteId, checkedAt])
+}
+
+// לוג התראות שנשלחו — מונע שליחה כפולה של אותה התראה
+model NotificationLog {
+  id        String   @id @default(cuid())
+  // refType: domain | hosting | subscription | ssl
+  refType   String
+  // refId: מזהה האתר (domain/hosting/ssl) או מזהה המנוי (subscription)
+  refId     String
+  siteId    String?
+  // הסף בימים שהופעל (30/14/7/0). 0 = פג תוקף.
+  threshold Int
+  // התאריך שאליו ההתראה מתייחסת — חלק ממפתח הייחודיות
+  dueDate   DateTime
+  // channel: email | in_app
+  channel   String   @default("email")
+  title     String
+  message   String
+  sentAt    DateTime @default(now())
+
+  // מפתח ייחודי: אותה ישות + אותו סף + אותו תאריך יעד + אותו ערוץ = פעם אחת בלבד
+  @@unique([refType, refId, threshold, channel, dueDate])
+  @@index([siteId])
+  @@index([sentAt])
+}
