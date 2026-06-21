@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireApiAuth, handleApi } from "@/lib/api-helpers";
+import { requireApiAuth, requireAdmin, handleApi } from "@/lib/api-helpers";
 import { clientSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   return handleApi(async () => {
-    await requireApiAuth();
+    await requireAdmin();
     const data = clientSchema.parse(await req.json());
     const client = await prisma.client.create({ data });
     return { client };

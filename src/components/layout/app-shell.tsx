@@ -12,9 +12,11 @@ import { NAV_ITEMS } from "./nav";
 
 export function AppShell({
   user,
+  isAdmin = false,
   children,
 }: {
   user: { name?: string | null; email?: string | null };
+  isAdmin?: boolean;
   children: React.ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -44,7 +46,7 @@ export function AppShell({
       {/* Sidebar קבוע — דסקטופ */}
       <aside className="fixed inset-y-0 right-0 z-30 hidden w-64 border-l bg-card lg:block">
         <div className="border-b">{Brand}</div>
-        <SidebarNav />
+        <SidebarNav isAdmin={isAdmin} />
       </aside>
 
       {/* מגירה — מובייל */}
@@ -65,7 +67,7 @@ export function AppShell({
                 <X className="size-5" />
               </button>
             </div>
-            <SidebarNav onNavigate={() => setDrawerOpen(false)} />
+            <SidebarNav isAdmin={isAdmin} onNavigate={() => setDrawerOpen(false)} />
           </aside>
         </div>
       )}

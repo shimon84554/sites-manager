@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireApiAuth, handleApi } from "@/lib/api-helpers";
+import { requireAdmin, handleApi } from "@/lib/api-helpers";
 import { clientSchema } from "@/lib/validations";
 
 export async function PATCH(
@@ -8,7 +8,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   return handleApi(async () => {
-    await requireApiAuth();
+    await requireAdmin();
     const data = clientSchema.parse(await req.json());
     const client = await prisma.client.update({
       where: { id: params.id },
@@ -23,7 +23,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   return handleApi(async () => {
-    await requireApiAuth();
+    await requireAdmin();
     // מחיקת לקוח מוחקת בקסקדה את האתרים והנתונים שלו (onDelete: Cascade)
     await prisma.client.delete({ where: { id: params.id } });
     return { ok: true };

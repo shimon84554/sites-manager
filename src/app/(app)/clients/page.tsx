@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Users, Globe, Mail, Phone } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { isAdmin } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,15 +12,18 @@ import { DeleteButton } from "@/components/delete-button";
 export const dynamic = "force-dynamic";
 
 export default async function ClientsPage() {
-  const clients = await prisma.client.findMany({
-    orderBy: { name: "asc" },
-    include: { _count: { select: { sites: true } } },
-  });
+  const [clients, admin] = await Promise.all([
+    prisma.client.findMany({
+      orderBy: { name: "asc" },
+      include: { _count: { select: { sites: true } } },
+    }),
+    isAdmin(),
+  ]);
 
   return (
     <div>
       <PageHeader title="לקוחות" description="החברות שעבורן אתה מתחזק אתרים">
-        <ClientFormModal />
+        {admin && <ClientFormModal />}
       </PageHeader>
 
       {clients.length === 0 ? (
@@ -27,7 +31,7 @@ export default async function ClientsPage() {
           icon={Users}
           title="אין לקוחות עדיין"
           description="הוסף את הלקוח הראשון שלך כדי לשייך אליו אתרים."
-          action={<ClientFormModal />}
+          action={admin ? <ClientFormModal /> : undefined}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -43,23 +47,25 @@ export default async function ClientsPage() {
                       </p>
                     )}
                   </div>
-                  <div className="flex shrink-0 items-center">
-                    <ClientFormModal
-                      client={{
-                        id: c.id,
-                        name: c.name,
-                        contactName: c.contactName,
-                        contactEmail: c.contactEmail,
-                        contactPhone: c.contactPhone,
-                        notes: c.notes,
-                      }}
-                    />
-                    <DeleteButton
-                      url={`/api/clients/${c.id}`}
-                      title={`למחוק את ${c.name}?`}
-                      description="פעולה זו תמחק גם את כל האתרים, המנויים ופרטי הגישה המשויכים ללקוח. לא ניתן לבטל."
-                    />
-                  </div>
+                  {admin && (
+                    <div className="flex shrink-0 items-center">
+                      <ClientFormModal
+                        client={{
+                          id: c.id,
+                          name: c.name,
+                          contactName: c.contactName,
+                          contactEmail: c.contactEmail,
+                          contactPhone: c.contactPhone,
+                          notes: c.notes,
+                        }}
+                      />
+                      <DeleteButton
+                        url={`/api/clients/${c.id}`}
+                        title={`למחוק את ${c.name}?`}
+                        description="פעולה זו תמחק גם את כל האתרים והמנויים המשויכים ללקוח. לא ניתן לבטל."
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-1.5 text-sm text-muted-foreground">

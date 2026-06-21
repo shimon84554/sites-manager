@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CreditCard, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { isAdmin } from "@/lib/auth";
 import { daysUntil, urgencyOf } from "@/lib/renewals";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
@@ -28,6 +29,8 @@ export default async function SubscriptionsPage() {
       select: { id: true, name: true },
     }),
   ]);
+
+  const admin = await isAdmin();
 
   if (sites.length === 0) {
     return (
@@ -76,7 +79,7 @@ export default async function SubscriptionsPage() {
         title="מנויים"
         description="כל השירותים בתשלום — WhatsApp API, SMS, SSL בתשלום ועוד"
       >
-        <SubscriptionFormModal sites={sites} />
+        {admin && <SubscriptionFormModal sites={sites} />}
       </PageHeader>
 
       {subs.length === 0 ? (
@@ -84,10 +87,10 @@ export default async function SubscriptionsPage() {
           icon={CreditCard}
           title="אין מנויים עדיין"
           description="הוסף שירות בתשלום ושייך אותו לאתר כדי לעקוב אחרי חידושים ועלויות."
-          action={<SubscriptionFormModal sites={sites} />}
+          action={admin ? <SubscriptionFormModal sites={sites} /> : undefined}
         />
       ) : (
-        <SubscriptionsList subscriptions={rows} sites={sites} />
+        <SubscriptionsList subscriptions={rows} sites={sites} isAdmin={admin} />
       )}
     </div>
   );

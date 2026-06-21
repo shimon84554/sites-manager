@@ -7,17 +7,12 @@ import {
   Globe,
   Database,
   Wallet,
-  Activity,
   CreditCard,
-  KeyRound,
   CalendarClock,
   ExternalLink,
-  CheckCircle2,
-  XCircle,
-  ShieldCheck,
-  ShieldAlert,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { isAdmin } from "@/lib/auth";
 import { computeRenewals, serializeRenewals } from "@/lib/renewals";
 import { siteCostSummary } from "@/lib/stats";
 import { formatMoney } from "@/lib/currency";
@@ -42,10 +37,7 @@ import { Button } from "@/components/ui/button";
 import { DetailList } from "@/components/detail-list";
 import { SiteTimeline } from "@/components/sites/site-timeline";
 import { DeleteButton } from "@/components/delete-button";
-import { CheckButton } from "@/components/monitoring/check-button";
 import { SubscriptionFormModal } from "@/components/subscriptions/subscription-form-modal";
-import { CredentialFormModal } from "@/components/credentials/credential-form-modal";
-import { CredentialItem } from "@/components/credentials/credential-item";
 
 export const dynamic = "force-dynamic";
 
@@ -70,24 +62,15 @@ export default async function SitePage({
     include: {
       client: true,
       subscriptions: { orderBy: { renewalDate: "asc" } },
-      credentials: { orderBy: { createdAt: "asc" } },
     },
   });
 
   if (!site) notFound();
 
+  const admin = await isAdmin();
   const cost = siteCostSummary(site as any);
   const timeline = serializeRenewals(computeRenewals([site as any]));
   const status = site.status as SiteStatus;
-
-  const sslTone =
-    site.sslDaysLeft == null
-      ? "muted"
-      : site.sslDaysLeft < 14
-        ? "urgent"
-        : site.sslDaysLeft < 30
-          ? "warn"
-          : "ok";
 
   return (
     <div className="space-y-6">
@@ -129,23 +112,24 @@ export default async function SitePage({
               )}
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <CheckButton siteId={site.id} />
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/sites/${site.id}/edit`}>
-                <Pencil className="size-4" />
-                עריכה
-              </Link>
-            </Button>
-            <DeleteButton
-              url={`/api/sites/${site.id}`}
-              title={`למחוק את ${site.name}?`}
-              description="ימחקו גם המנויים ופרטי הגישה. לא ניתן לבטל."
-              redirectTo="/sites"
-              variant="outline"
-              size="icon"
-            />
-          </div>
+          {admin && (
+            <div className="flex shrink-0 items-center gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/sites/${site.id}/edit`}>
+                  <Pencil className="size-4" />
+                  עריכה
+                </Link>
+              </Button>
+              <DeleteButton
+                url={`/api/sites/${site.id}`}
+                title={`למחוק את ${site.name}?`}
+                description="ימחקו גם המנויים. לא ניתן לבטל."
+                redirectTo="/sites"
+                variant="outline"
+                size="icon"
+              />
+            </div>
+          )}
         </div>
         {site.notes && (
           <p className="mt-3 rounded-lg border bg-muted/30 p-3 text-sm">
@@ -255,63 +239,6 @@ export default async function SitePage({
               </CardContent>
             </Card>
 
-            {/* ניטור */}
-            <Card>
-              <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
-                <div className="flex items-center gap-2">
-                  <Activity className="size-5 text-muted-foreground" />
-                  <CardTitle className="text-base">ניטור</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">זמינות</span>
-                  {site.lastCheckAt == null ? (
-                    <Badge variant="muted">טרם נבדק</Badge>
-                  ) : site.lastUp ? (
-                    <Badge variant="ok">
-                      <CheckCircle2 className="ml-1 size-3" />
-                      פעיל ({site.lastStatusCode})
-                    </Badge>
-                  ) : (
-                    <Badge variant="urgent">
-                      <XCircle className="ml-1 size-3" />
-                      לא זמין
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">תוקף SSL</span>
-                  {site.sslDaysLeft == null ? (
-                    <Badge variant="muted">לא ידוע</Badge>
-                  ) : (
-                    <Badge variant={sslTone}>
-                      {sslTone === "urgent" ? (
-                        <ShieldAlert className="ml-1 size-3" />
-                      ) : (
-                        <ShieldCheck className="ml-1 size-3" />
-                      )}
-                      {site.sslDaysLeft} ימים
-                    </Badge>
-                  )}
-                </div>
-                {site.sslValidTo && (
-                  <p className="text-xs text-muted-foreground">
-                    תפוגה: {formatDateShort(site.sslValidTo)}
-                    {site.sslIssuer && ` · ${site.sslIssuer}`}
-                  </p>
-                )}
-                {site.lastCheckAt && (
-                  <p className="text-xs text-muted-foreground">
-                    נבדק לאחרונה: {formatDateShort(site.lastCheckAt)}
-                    {site.lastResponseMs != null && ` · ${site.lastResponseMs}ms`}
-                  </p>
-                )}
-                {!site.monitorEnabled && (
-                  <p className="text-xs text-warn">הניטור מושבת לאתר זה.</p>
-                )}
-              </CardContent>
-            </Card>
           </div>
 
           {/* מנויים */}
@@ -323,7 +250,7 @@ export default async function SitePage({
                   מנויים ({site.subscriptions.length})
                 </CardTitle>
               </div>
-              <SubscriptionFormModal fixedSiteId={site.id} />
+              {admin && <SubscriptionFormModal fixedSiteId={site.id} />}
             </CardHeader>
             <CardContent>
               {site.subscriptions.length === 0 ? (
@@ -356,27 +283,29 @@ export default async function SitePage({
                             ` · חידוש ${formatDateShort(sub.renewalDate)}`}
                         </p>
                       </div>
-                      <div className="flex shrink-0 items-center">
-                        <SubscriptionFormModal
-                          fixedSiteId={site.id}
-                          subscription={{
-                            id: sub.id,
-                            siteId: sub.siteId,
-                            serviceName: sub.serviceName,
-                            provider: sub.provider,
-                            costAmount: sub.costAmount,
-                            currency: sub.currency,
-                            billingCycle: sub.billingCycle,
-                            renewalDate: sub.renewalDate,
-                            autoRenew: sub.autoRenew,
-                            notes: sub.notes,
-                          }}
-                        />
-                        <DeleteButton
-                          url={`/api/subscriptions/${sub.id}`}
-                          title={`למחוק את "${sub.serviceName}"?`}
-                        />
-                      </div>
+                      {admin && (
+                        <div className="flex shrink-0 items-center">
+                          <SubscriptionFormModal
+                            fixedSiteId={site.id}
+                            subscription={{
+                              id: sub.id,
+                              siteId: sub.siteId,
+                              serviceName: sub.serviceName,
+                              provider: sub.provider,
+                              costAmount: sub.costAmount,
+                              currency: sub.currency,
+                              billingCycle: sub.billingCycle,
+                              renewalDate: sub.renewalDate,
+                              autoRenew: sub.autoRenew,
+                              notes: sub.notes,
+                            }}
+                          />
+                          <DeleteButton
+                            url={`/api/subscriptions/${sub.id}`}
+                            title={`למחוק את "${sub.serviceName}"?`}
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -384,41 +313,6 @@ export default async function SitePage({
             </CardContent>
           </Card>
 
-          {/* כספת פרטי גישה */}
-          <Card>
-            <CardHeader className="flex-row items-center justify-between space-y-0">
-              <div className="flex items-center gap-2">
-                <KeyRound className="size-5 text-muted-foreground" />
-                <CardTitle className="text-base">
-                  פרטי גישה ({site.credentials.length})
-                </CardTitle>
-              </div>
-              <CredentialFormModal fixedSiteId={site.id} />
-            </CardHeader>
-            <CardContent>
-              {site.credentials.length === 0 ? (
-                <p className="py-4 text-center text-sm text-muted-foreground">
-                  אין פרטי גישה שמורים. הוסף גישות FTP/SSH/פאנל — הכול מוצפן.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {site.credentials.map((cred) => (
-                    <CredentialItem
-                      key={cred.id}
-                      cred={{
-                        id: cred.id,
-                        label: cred.label,
-                        type: cred.type,
-                        username: cred.username,
-                        url: cred.url,
-                        notes: cred.notes,
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
 
         {/* עמודה צדדית */}

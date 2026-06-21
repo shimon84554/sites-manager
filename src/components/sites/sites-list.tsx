@@ -52,10 +52,12 @@ export function SitesList({
   sites,
   clients,
   initialClient = "all",
+  isAdmin = false,
 }: {
   sites: SiteRow[];
   clients: { id: string; name: string }[];
   initialClient?: string;
+  isAdmin?: boolean;
 }) {
   const [q, setQ] = React.useState("");
   const [client, setClient] = React.useState(initialClient);
@@ -133,7 +135,7 @@ export function SitesList({
                 <TableHead className="hidden xl:table-cell">אירוח</TableHead>
                 <TableHead>חידוש קרוב</TableHead>
                 <TableHead className="hidden sm:table-cell">עלות/חודש</TableHead>
-                <TableHead className="text-left">פעולות</TableHead>
+                {isAdmin && <TableHead className="text-left">פעולות</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -181,20 +183,22 @@ export function SitesList({
                   <TableCell className="hidden whitespace-nowrap tabular-nums sm:table-cell">
                     {formatMoney(s.monthlyCost)}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end">
-                      <Button variant="ghost" size="icon" asChild aria-label="עריכה">
-                        <Link href={`/sites/${s.id}/edit`}>
-                          <Pencil className="size-4" />
-                        </Link>
-                      </Button>
-                      <DeleteButton
-                        url={`/api/sites/${s.id}`}
-                        title={`למחוק את ${s.name}?`}
-                        description="ימחקו גם המנויים ופרטי הגישה של האתר. לא ניתן לבטל."
-                      />
-                    </div>
-                  </TableCell>
+                  {isAdmin && (
+                    <TableCell>
+                      <div className="flex items-center justify-end">
+                        <Button variant="ghost" size="icon" asChild aria-label="עריכה">
+                          <Link href={`/sites/${s.id}/edit`}>
+                            <Pencil className="size-4" />
+                          </Link>
+                        </Button>
+                        <DeleteButton
+                          url={`/api/sites/${s.id}`}
+                          title={`למחוק את ${s.name}?`}
+                          description="ימחקו גם המנויים של האתר. לא ניתן לבטל."
+                        />
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

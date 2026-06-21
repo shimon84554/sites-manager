@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Field, FormSection } from "@/components/form/field";
 import { useSubmit } from "@/components/form/use-submit";
 import { toDateInputValue } from "@/lib/utils";
@@ -67,8 +66,6 @@ export function SiteForm({
     clientBillingAmount: site?.clientBillingAmount?.toString() ?? "",
     clientBillingCurrency: site?.clientBillingCurrency ?? "ILS",
     clientBillingCycle: site?.clientBillingCycle ?? "monthly",
-
-    monitorEnabled: site?.monitorEnabled ?? true,
   });
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<any>) =>
@@ -175,13 +172,6 @@ export function SiteForm({
           <Field label="תאריך חידוש אירוח" error={errors.hostingRenewalDate}>
             <Input type="date" value={form.hostingRenewalDate} onChange={set("hostingRenewalDate")} />
           </Field>
-          <div className="flex items-center justify-between rounded-md border bg-background px-3 py-2 sm:self-end">
-            <span className="text-sm font-medium">ניטור SSL וזמינות</span>
-            <Switch
-              checked={form.monitorEnabled}
-              onCheckedChange={(v) => setForm((f) => ({ ...f, monitorEnabled: v }))}
-            />
-          </div>
         </div>
       </FormSection>
 

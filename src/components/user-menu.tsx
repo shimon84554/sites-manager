@@ -31,6 +31,14 @@ export function UserMenu({ name, email }: { name?: string | null; email?: string
           </div>
           <div className="p-1">
             <Link
+              href="/profile"
+              onClick={close}
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent"
+            >
+              <UserIcon className="size-4" />
+              הפרופיל שלי
+            </Link>
+            <Link
               href="/settings"
               onClick={close}
               className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent"

@@ -13,6 +13,19 @@ export async function requireApiAuth() {
   return session;
 }
 
+/** דורש סשן של מנהל. משתמש "רגיל" (צפייה בלבד) יקבל 403. */
+export async function requireAdmin() {
+  const session = await requireApiAuth();
+  const role = (session.user as { role?: string }).role;
+  if (role !== "admin") {
+    throw NextResponse.json(
+      { error: "אין לך הרשאה לבצע פעולה זו (צפייה בלבד)" },
+      { status: 403 }
+    );
+  }
+  return session;
+}
+
 /** עוטף handler של API בטיפול שגיאות אחיד (Zod / 401 / כללי). */
 export async function handleApi<T>(
   fn: () => Promise<T>

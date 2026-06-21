@@ -39,9 +39,11 @@ const URG: Record<Urgency, "urgent" | "warn" | "ok"> = {
 export function SubscriptionsList({
   subscriptions,
   sites,
+  isAdmin = false,
 }: {
   subscriptions: SubRow[];
   sites: { id: string; name: string }[];
+  isAdmin?: boolean;
 }) {
   const [q, setQ] = React.useState("");
 
@@ -76,7 +78,7 @@ export function SubscriptionsList({
               <TableHead className="hidden lg:table-cell">ספק</TableHead>
               <TableHead>עלות</TableHead>
               <TableHead>חידוש</TableHead>
-              <TableHead className="text-left">פעולות</TableHead>
+              {isAdmin && <TableHead className="text-left">פעולות</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -110,15 +112,17 @@ export function SubscriptionsList({
                     <span className="text-sm text-muted-foreground">—</span>
                   )}
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-end">
-                    <SubscriptionFormModal subscription={s} sites={sites} />
-                    <DeleteButton
-                      url={`/api/subscriptions/${s.id}`}
-                      title={`למחוק את "${s.serviceName}"?`}
-                    />
-                  </div>
-                </TableCell>
+                {isAdmin && (
+                  <TableCell>
+                    <div className="flex items-center justify-end">
+                      <SubscriptionFormModal subscription={s} sites={sites} />
+                      <DeleteButton
+                        url={`/api/subscriptions/${s.id}`}
+                        title={`למחוק את "${s.serviceName}"?`}
+                      />
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>

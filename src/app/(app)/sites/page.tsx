@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Globe, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { isAdmin } from "@/lib/auth";
 import { siteCostSummary } from "@/lib/stats";
 import { computeRenewals } from "@/lib/renewals";
 import { PageHeader } from "@/components/page-header";
@@ -30,28 +31,34 @@ export default async function SitesPage({
     }),
   ]);
 
+  const admin = await isAdmin();
+
   if (sites.length === 0) {
     return (
       <div>
         <PageHeader title="אתרים" description="כל האתרים שאתה מתחזק">
-          <Button asChild>
-            <Link href="/sites/new">
-              <Plus className="size-4" />
-              אתר חדש
-            </Link>
-          </Button>
+          {admin && (
+            <Button asChild>
+              <Link href="/sites/new">
+                <Plus className="size-4" />
+                אתר חדש
+              </Link>
+            </Button>
+          )}
         </PageHeader>
         <EmptyState
           icon={Globe}
           title="אין אתרים עדיין"
           description="הוסף את האתר הראשון שלך ותתחיל לעקוב אחרי דומיינים, אירוח, מנויים וחידושים."
           action={
-            <Button asChild>
-              <Link href="/sites/new">
-                <Plus className="size-4" />
-                הוספת אתר
-              </Link>
-            </Button>
+            admin ? (
+              <Button asChild>
+                <Link href="/sites/new">
+                  <Plus className="size-4" />
+                  הוספת אתר
+                </Link>
+              </Button>
+            ) : undefined
           }
         />
       </div>
@@ -82,18 +89,21 @@ export default async function SitesPage({
   return (
     <div>
       <PageHeader title="אתרים" description="כל האתרים שאתה מתחזק">
-        <Button asChild>
-          <Link href="/sites/new">
-            <Plus className="size-4" />
-            אתר חדש
-          </Link>
-        </Button>
+        {admin && (
+          <Button asChild>
+            <Link href="/sites/new">
+              <Plus className="size-4" />
+              אתר חדש
+            </Link>
+          </Button>
+        )}
       </PageHeader>
 
       <SitesList
         sites={rows}
         clients={clients}
         initialClient={searchParams.client ?? "all"}
+        isAdmin={admin}
       />
     </div>
   );

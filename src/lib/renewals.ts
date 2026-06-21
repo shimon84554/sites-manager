@@ -148,21 +148,6 @@ export function computeRenewals(
       }
     }
 
-    // תעודת SSL (אם נוטרה)
-    const sslDate = toDate(site.sslValidTo);
-    if (sslDate && site.monitorEnabled !== false) {
-      push({
-        key: `ssl-${site.id}`,
-        kind: "ssl",
-        title: `תעודת SSL — ${site.primaryDomain ?? site.name}`,
-        provider: null,
-        dueDate: sslDate,
-        amount: null,
-        currency: null,
-        refType: "ssl",
-        refId: site.id,
-      });
-    }
   }
 
   // מיון לפי דחיפות (הקרוב/הפג ביותר ראשון)

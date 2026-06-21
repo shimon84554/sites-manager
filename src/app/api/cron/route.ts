@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runMonitoring } from "@/lib/monitoring";
 import { runRenewalCheck } from "@/lib/notifications";
 
 // משימת ה-cron היומית — מוגנת ב-CRON_SECRET.
-// מפעילה: (1) ניטור זמינות/SSL לכל האתרים, ואז (2) בדיקת חידושים ושליחת מיילים.
+// מפעילה בדיקת חידושים (דומיין/אירוח/מנויים) ושליחת מיילים.
 //
 // הפעלה:
 //   GET/POST /api/cron?secret=YOUR_SECRET
@@ -31,15 +30,10 @@ async function run(req: NextRequest) {
   }
 
   const startedAt = new Date().toISOString();
-  // 1. ניטור — מרענן את נתוני ה-SSL/זמינות לפני בדיקת ההתראות
-  const monitoring = await runMonitoring().catch((e) => ({
-    error: String(e),
-    checked: 0,
-  }));
-  // 2. בדיקת חידושים ושליחת מיילים
+  // בדיקת חידושים ושליחת מיילים
   const renewals = await runRenewalCheck();
 
-  return NextResponse.json({ ok: true, startedAt, monitoring, renewals });
+  return NextResponse.json({ ok: true, startedAt, renewals });
 }
 
 export async function GET(req: NextRequest) {

@@ -13,8 +13,13 @@ export default async function AppLayout({
     redirect("/login");
   }
 
+  const isAdmin = (session.user as { role?: string }).role === "admin";
+
   return (
-    <AppShell user={{ name: session.user.name, email: session.user.email }}>
+    <AppShell
+      user={{ name: session.user.name, email: session.user.email }}
+      isAdmin={isAdmin}
+    >
       {children}
     </AppShell>
   );

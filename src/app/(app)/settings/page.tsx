@@ -1,6 +1,5 @@
 import {
   Mail,
-  ShieldCheck,
   Clock,
   Download,
   CheckCircle2,
@@ -9,13 +8,11 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { isEmailConfigured } from "@/lib/email";
-import { isEncryptionConfigured } from "@/lib/crypto";
 import { parseThresholds } from "@/lib/notifications";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RunChecksButton } from "@/components/settings/run-checks-button";
 import { formatDateShort } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -53,10 +50,8 @@ function StatusRow({
 
 export default async function SettingsPage() {
   const emailOk = isEmailConfigured();
-  const encOk = isEncryptionConfigured();
   const cronOk = Boolean(process.env.CRON_SECRET);
   const thresholds = parseThresholds();
-  const sslWarn = Number(process.env.SSL_WARN_DAYS || 14);
 
   const recentLogs = await prisma.notificationLog.findMany({
     orderBy: { sentAt: "desc" },
@@ -83,13 +78,6 @@ export default async function SettingsPage() {
               ok={emailOk}
               okText="מוגדר"
               failText="קונסול בלבד"
-            />
-            <StatusRow
-              icon={ShieldCheck}
-              label="הצפנת כספת (AES-256)"
-              ok={encOk}
-              okText="מוגדר"
-              failText="חסר מפתח"
             />
             <StatusRow
               icon={Clock}
@@ -126,19 +114,9 @@ export default async function SettingsPage() {
                 <Badge variant="urgent">פג תוקף</Badge>
               </div>
             </div>
-            <div>
-              <p className="mb-1.5 text-sm text-muted-foreground">
-                התראת SSL כשנותרו פחות מ:
-              </p>
-              <Badge variant="warn">{sslWarn} ימים</Badge>
-            </div>
             <p className="text-xs text-muted-foreground">
-              ניתן לשנות דרך <code>REMINDER_THRESHOLDS_DAYS</code> ו-
-              <code>SSL_WARN_DAYS</code> ב-<code>.env</code>.
+              ניתן לשנות דרך <code>REMINDER_THRESHOLDS_DAYS</code> ב-<code>.env</code>.
             </p>
-            <div className="border-t pt-4">
-              <RunChecksButton />
-            </div>
           </CardContent>
         </Card>
       </div>

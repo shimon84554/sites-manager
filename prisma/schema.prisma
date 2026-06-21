@@ -20,6 +20,8 @@ model User {
   email        String   @unique
   name         String?
   passwordHash String
+  // role: admin (עורך הכל + מנהל משתמשים) | user (צפייה בלבד)
+  role         String   @default("user")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

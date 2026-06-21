@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireApiAuth, handleApi } from "@/lib/api-helpers";
+import { requireApiAuth, requireAdmin, handleApi } from "@/lib/api-helpers";
 import { siteSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,6 @@ export async function GET(
       include: {
         client: true,
         subscriptions: { orderBy: { renewalDate: "asc" } },
-        credentials: { orderBy: { createdAt: "asc" } },
       },
     });
     if (!site) {
@@ -31,7 +30,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   return handleApi(async () => {
-    await requireApiAuth();
+    await requireAdmin();
     const data = siteSchema.parse(await req.json());
     const site = await prisma.site.update({
       where: { id: params.id },
@@ -46,7 +45,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   return handleApi(async () => {
-    await requireApiAuth();
+    await requireAdmin();
     await prisma.site.delete({ where: { id: params.id } });
     return { ok: true };
   });

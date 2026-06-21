@@ -44,7 +44,6 @@ export function sitesToCsv(sites: any[]): string {
     "Repo",
     "חיוב ללקוח",
     "מחזור חיוב",
-    "תוקף SSL",
   ];
   const rows = sites.map((s) => [
     s.name,
@@ -66,7 +65,6 @@ export function sitesToCsv(sites: any[]): string {
     s.repoUrl ?? "",
     s.clientBillingAmount ?? "",
     cycle(s.clientBillingCycle),
-    s.sslValidTo ? formatDateShort(s.sslValidTo) : "",
   ]);
   return toCsv(headers, rows);
 }

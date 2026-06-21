@@ -30,18 +30,28 @@ export const authOptions: NextAuthOptions = {
         );
         if (!valid) return null;
 
-        return { id: user.id, email: user.email, name: user.name ?? undefined };
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name ?? undefined,
+          role: user.role,
+        };
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) token.uid = (user as { id: string }).id;
+      if (user) {
+        token.uid = (user as { id: string }).id;
+        token.role = (user as { role?: string }).role ?? "user";
+      }
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token.uid) {
-        (session.user as { id?: string }).id = token.uid as string;
+      if (session.user) {
+        if (token.uid) (session.user as { id?: string }).id = token.uid as string;
+        (session.user as { role?: string }).role =
+          (token.role as string) ?? "user";
       }
       return session;
     },
@@ -52,4 +62,10 @@ export const authOptions: NextAuthOptions = {
 /** קיצור לקבלת הסשן בצד שרת */
 export function auth() {
   return getServerSession(authOptions);
+}
+
+/** האם המשתמש המחובר הוא מנהל (צד שרת). */
+export async function isAdmin(): Promise<boolean> {
+  const session = await auth();
+  return (session?.user as { role?: string } | undefined)?.role === "admin";
 }

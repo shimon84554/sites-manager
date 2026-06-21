@@ -116,3 +116,44 @@ export const credentialSchema = z.object({
   notes: optionalText(),
 });
 export type CredentialInput = z.infer<typeof credentialSchema>;
+
+// ---- פרופיל אישי (עדכון עצמי של שם/סיסמה) ----
+export const profileSchema = z
+  .object({
+    name: optionalText(200),
+    currentPassword: z.preprocess(emptyToNull, z.string().nullable()),
+    newPassword: z.preprocess(
+      emptyToNull,
+      z.string().min(8, "סיסמה חדשה באורך 8 תווים לפחות").nullable()
+    ),
+  })
+  .refine((d) => !d.newPassword || !!d.currentPassword, {
+    message: "יש להזין את הסיסמה הנוכחית כדי לשנות סיסמה",
+    path: ["currentPassword"],
+  });
+export type ProfileInput = z.infer<typeof profileSchema>;
+
+// ---- ניהול משתמשים (מנהל בלבד) ----
+const roleEnum = z.enum(["admin", "user"]);
+
+export const userCreateSchema = z.object({
+  name: optionalText(200),
+  email: z.preprocess(
+    (v) => (typeof v === "string" ? v.trim().toLowerCase() : v),
+    z.string().email("כתובת מייל לא תקינה")
+  ),
+  password: z.string().min(8, "סיסמה באורך 8 תווים לפחות"),
+  role: roleEnum.default("user"),
+});
+export type UserCreateInput = z.infer<typeof userCreateSchema>;
+
+export const userUpdateSchema = z.object({
+  name: optionalText(200),
+  role: roleEnum,
+  // ריק = לא משנים סיסמה
+  password: z.preprocess(
+    emptyToNull,
+    z.string().min(8, "סיסמה באורך 8 תווים לפחות").nullable()
+  ),
+});
+export type UserUpdateInput = z.infer<typeof userUpdateSchema>;
